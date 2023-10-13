@@ -152,17 +152,17 @@
             var start_of_last_num = last_char_position - num_as_str.length;
             var chars_story = story.insertionPoints.itemByRange(start_of_last_num, last_char_position);
             
-            // var previous_style = story.appliedCharacterStyle;
+            var previous_style = story.appliedCharacterStyle;
+            story.contents += " ";
 
             var hyperlink_source = app.activeDocument.hyperlinkTextSources.add(chars_story);
-            // hyperlink_source.appliedCharacterStyle = hyperlink_style;
+            hyperlink_source.appliedCharacterStyle = hyperlink_style;
             app.activeDocument.hyperlinks.add(hyperlink_source, anchors[i].destination);
 
-            // story.contents += " ";
-            // story.insertionPoints.lastItem().appliedCharacterStyle = previous_style;
+            story.characters[-1].appliedCharacterStyle = previous_style;
 
             if (i < (anchors.length - 1)) {
-                story.contents += " & ";
+                story.contents += "& ";
             }
         }
     }
@@ -176,10 +176,6 @@
             story.contents += anchor_name + ": ";
             add_references_to_glossary_entry(story, anchors[anchor_name], hyperlink_style);            
             story.contents += "\r";
-
-            if (i > 3) {
-                return;
-            }
         }
     }
 
