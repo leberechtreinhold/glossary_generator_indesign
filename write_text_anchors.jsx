@@ -20,9 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#targetengine write_text_anchors;
+//@target indesign
 
 (function () {
+    // Parameters -----------------------------------------------------------------------------------------------------
+    
+    CHARACTER_STYLE_TO_USE = "HyperlinkGlossary";
+
     // Utilities ------------------------------------------------------------------------------------------------------
 
     // Utility function to clean a string
@@ -126,7 +130,8 @@
             anchors[name].push({
                 name: original_name,
                 order: current_order,
-                number: current_number
+                number: current_number,
+                destination: hyperlink_text_destinations[i]
             });
         }
         return anchors;
@@ -134,30 +139,48 @@
 
     // Given all the anchors corresponding with a single name in an array, returns a line
     // corresponding with the entry
-    function get_anchor_entry(anchor_name, anchors) {
+    function add_references_to_glossary_entry(story, anchors, hyperlink_style) {
         var numbers = "";
         anchors.sort(function (a, b) {
             return a.order - b.order;
         });
         for (var i = 0; i < anchors.length; i++) {
-            numbers += anchors[i].number + " & ";
+            var num_as_str = "" + anchors[i].number; // Trick to convert number to str: ""+13="13"
+            story.contents += num_as_str;
+            
+            var last_char_position = story.insertionPoints.length - 1;
+            var start_of_last_num = last_char_position - num_as_str.length;
+            var chars_story = story.insertionPoints.itemByRange(start_of_last_num, last_char_position);
+            
+            // var previous_style = story.appliedCharacterStyle;
+
+            var hyperlink_source = app.activeDocument.hyperlinkTextSources.add(chars_story);
+            // hyperlink_source.appliedCharacterStyle = hyperlink_style;
+            app.activeDocument.hyperlinks.add(hyperlink_source, anchors[i].destination);
+
+            // story.contents += " ";
+            // story.insertionPoints.lastItem().appliedCharacterStyle = previous_style;
+
+            if (i < (anchors.length - 1)) {
+                story.contents += " & ";
+            }
         }
-        numbers = trim_chars_ordered(numbers, [' ', '&', ' '])
-        return anchor_name + ": " + numbers;
     }
 
-    function anchors_to_text(anchors) {
-        var final_text = "";
-
+    function add_glossary_entries_to_story(story, anchors, hyperlink_style) {
         var anchor_names = get_keys(anchors);
         anchor_names.sort();
 
         for (var i = 0; i < anchor_names.length; i++) {
             var anchor_name = anchor_names[i];
-            final_text += get_anchor_entry(anchor_name, anchors[anchor_name]) + "\r";
-        }
+            story.contents += anchor_name + ": ";
+            add_references_to_glossary_entry(story, anchors[anchor_name], hyperlink_style);            
+            story.contents += "\r";
 
-        return final_text;
+            if (i > 3) {
+                return;
+            }
+        }
     }
 
     function main() {
@@ -172,9 +195,22 @@
             return;
         }
 
-        var anchors = get_anchors();
+        var styles = app.activeDocument.characterStyles.everyItem().getElements();
+        var hyperlink_style_to_use = null;
+        for(var i=0; i<styles.length; i++) {
+            if (styles[i].name == CHARACTER_STYLE_TO_USE) {
+                hyperlink_style_to_use = styles[i];
+                break;
+            }
+        }
 
-        selected_obj.contents = anchors_to_text(anchors);
+        if (!hyperlink_style_to_use) {
+            alert("The Character style " + CHARACTER_STYLE_TO_USE + " was not found in this doc.");
+            return;
+        }
+
+        var anchors = get_anchors();
+        add_glossary_entries_to_story(selected_obj.parentStory, anchors, hyperlink_style_to_use);
     }
 
     if (app.documents.length > 0) {
