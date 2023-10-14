@@ -93,9 +93,8 @@
             var paragraph = paragraphs.firstItem();
             var current_number = paragraph.bulletsAndNumberingResultText;
             var current_order = 0;
-            
+
             if (current_number != "" && USE_BULLET_NUMBER_INSTEAD_OF_PAGE) {
-                current_number = trim_char(page_name, ",");
                 current_number = trim_chars_ordered(current_number, [' ', '.'])
                 var parts = current_number.split('.');
 
@@ -121,6 +120,7 @@
                         current_order = parseInt(textframes[j].parentPage.name)
                     }
                 }
+                current_number = trim_char(page_name, ",");
             }
 
             var original_name = trim_char(hyperlink_text_destinations[i].name, ' ');
