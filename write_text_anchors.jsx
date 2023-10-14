@@ -26,6 +26,7 @@
     // Parameters -----------------------------------------------------------------------------------------------------
     
     CHARACTER_STYLE_TO_USE = "HyperlinkGlossary";
+    USE_BULLET_NUMBER_INSTEAD_OF_PAGE = true;
 
     // Utilities ------------------------------------------------------------------------------------------------------
 
@@ -92,19 +93,12 @@
             var paragraph = paragraphs.firstItem();
             var current_number = paragraph.bulletsAndNumberingResultText;
             var current_order = 0;
-            if (current_number === "") {
-                var page_name = "?";
-                var textframes = paragraph.parentTextFrames;
-                for (var j = 0; j < textframes.length; j++) {
-                    if (textframes[j].isValid) {
-                        page_name += "p" + textframes[j].parentPage.name + ",";
-                        current_order = parseInt(textframes[j].parentPage.name)
-                    }
-                }
-                current_number = trim_char(page_name, ",") + "?";
-            } else {
+            
+            if (current_number != "" && USE_BULLET_NUMBER_INSTEAD_OF_PAGE) {
+                current_number = trim_char(page_name, ",");
                 current_number = trim_chars_ordered(current_number, [' ', '.'])
                 var parts = current_number.split('.');
+
                 // We only care for the first 4 values, it may have more but they are not counted... Each can have up to 99
                 if (parts.length >= 1) {
                     current_order += parseInt(parts[0]) * 10 * 10 * 10 * 10 * 10 * 10 * 10;
@@ -118,8 +112,16 @@
                 if (parts.length >= 4) {
                     current_order += parseInt(parts[3]);
                 }
+            } else {
+                var page_name = "";
+                var textframes = paragraph.parentTextFrames;
+                for (var j = 0; j < textframes.length; j++) {
+                    if (textframes[j].isValid) {
+                        page_name += "p" + textframes[j].parentPage.name + ",";
+                        current_order = parseInt(textframes[j].parentPage.name)
+                    }
+                }
             }
-
 
             var original_name = trim_char(hyperlink_text_destinations[i].name, ' ');
             var name = trim_char(original_name, '_');
